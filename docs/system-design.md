@@ -55,11 +55,11 @@ mounting the router, and keeps route files boring and easy to diff.
 
 Per [ADR 0002](./adr/0002-component-organization.md):
 
-| Folder                  | What lives there                                     | Test                                          |
-| ------------------------ | ----------------------------------------------------- | ---------------------------------------------- |
-| `components/ui/`         | Pure presentational primitives. No domain knowledge. | Could ship to a different app unchanged.       |
-| `components/<feature>/`  | Feature-coupled. Reads domain types from `lib/types`. | Removing the feature would delete the folder. |
-| `screens/`               | Page-level compositions. Owns layout + hook wiring.  | One-off; not reused across routes.             |
+| Folder                  | What lives there                                      | Test                                          |
+| ----------------------- | ----------------------------------------------------- | --------------------------------------------- |
+| `components/ui/`        | Pure presentational primitives. No domain knowledge.  | Could ship to a different app unchanged.      |
+| `components/<feature>/` | Feature-coupled. Reads domain types from `lib/types`. | Removing the feature would delete the folder. |
+| `screens/`              | Page-level compositions. Owns layout + hook wiring.   | One-off; not reused across routes.            |
 
 - **Two-consumer rule:** don't promote a component into `ui/` until it is
   needed in two different feature contexts. `Card` and `Button` are exempt —
@@ -99,7 +99,7 @@ See [ADR 0001](./adr/0001-state-management.md) for the full reasoning. Summary:
 
 This assignment's shared state is fundamentally server-shaped (a list with
 mutations), which is TanStack Query's job, not a client store's job. The
-*only* candidate for a hand-rolled shared layer would be incidental UI state
+_only_ candidate for a hand-rolled shared layer would be incidental UI state
 with no natural server shape, and at this app's size that need has not
 materialized. If it does, reach for Context + `useReducer` first:
 

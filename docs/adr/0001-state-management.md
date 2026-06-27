@@ -63,12 +63,6 @@ Context already solves.
 - Optimistic updates follow a known, testable lifecycle (`onMutate` /
   `onError` rollback / `onSettled` invalidate) instead of an ad hoc "update
   state now, fix it later if the request fails" pattern.
-- Cost: one additional dependency (`@tanstack/react-query`) for an app that
-  technically has no real backend. Justified because the brief explicitly
-  asks for the network layer to be treated as production-shaped, and because
-  the cross-tab requirement is the kind of problem this library exists to
-  solve — reaching for `useState` + manual lifting here would mean rebuilding
-  a worse version of the same cache.
 - Risk: a reviewer could read "added a data-fetching library for a mock API"
   as overengineering if the reasoning above isn't stated. Mitigated by
   writing the reasoning down here and in the README rather than assuming it's
@@ -92,6 +86,6 @@ Context already solves.
   exactly what a query cache already does.
 - **Zustand.** A reasonable lightweight option in general, and the right
   default for incidental cross-component client state per the trigger rule
-  above. Rejected as the *primary* layer here specifically because this
+  above. Rejected as the _primary_ layer here specifically because this
   app's shared state is server-shaped (a fetched list with mutations), which
   is TanStack Query's specialty, not a generic store's.
