@@ -1,10 +1,10 @@
+import AppLoader from "@/components/ui/AppLoader";
 import Button from "@/components/ui/Button";
 import Card from "@/components/ui/Card";
 import { useSummaryStats } from "@/hooks/useSummaryStats";
 import { tokens } from "@/lib/tokens";
 import { Feather, Ionicons, MaterialCommunityIcons } from "@expo/vector-icons";
 import {
-  ActivityIndicator,
   RefreshControl,
   ScrollView,
   StyleSheet,
@@ -25,11 +25,7 @@ export default function SummaryScreen() {
 
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={tokens.colors.accent} />
-        </View>
-      );
+      return <AppLoader />;
     }
 
     if (isError) {
@@ -58,6 +54,7 @@ export default function SummaryScreen() {
         contentContainerStyle={styles.scrollContent}
         refreshControl={
           <RefreshControl
+            testID="refresh-control"
             refreshing={isRefetching}
             onRefresh={refetch}
             tintColor={tokens.colors.accent}
@@ -150,7 +147,7 @@ const styles = StyleSheet.create({
     height: 160,
     justifyContent: "space-between",
     padding: tokens.spacing.md,
-    marginVertical: 0, // override Card default marginVertical
+    marginVertical: 0,
   },
   cardHeader: {
     flexDirection: "row",

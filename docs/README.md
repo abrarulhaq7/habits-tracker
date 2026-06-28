@@ -1,13 +1,8 @@
 # Architecture Decision Records
 
 This folder captures the non-obvious architectural decisions in this app —
-the **why**, not the **what**. Code shows what we built; these records show
-why we built it that way and what we rejected.
-
-This matters more than usual for this repo: it is a take-home assignment, and
-the brief explicitly asks for reasoning behind state management, testing, and
-architecture choices, not just working code. These ADRs are that reasoning,
-written down once instead of re-explained in every README section or AI prompt.
+the **why**, not the **what**. Code shows what was built; these records show
+why it was built that way and what was rejected.
 
 ## When to write an ADR
 
@@ -61,14 +56,10 @@ screen for this app:
 1. Read [`../system-design.md`](../system-design.md) first — it is the
    current living convention.
 2. Read the ADR for the area you're touching (state → 0001, component
-   placement → 0002, lists/renders → 0003, colors/spacing/type → 0004)
-   if the system design doc references it.
+   placement → 0002, lists/renders → 0003, colors/spacing/type → 0004).
 3. Match existing patterns in the codebase over inventing new ones. If a
    convention here conflicts with something already in the code, flag the
    conflict instead of silently picking one.
 4. Do not introduce a new dependency (state library, animation library,
    form library) that isn't already named in these docs without calling it
    out explicitly in your response.
-
-For the living "how" guide these decisions feed into, see
-[../system-design.md](../system-design.md).

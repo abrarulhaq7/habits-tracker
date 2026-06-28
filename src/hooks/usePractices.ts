@@ -28,7 +28,6 @@ export function usePractices() {
 
 /**
  * Hook for toggling the completed_today flag.
- * Mirrors the old TanStack useMutation shape so screens need no changes.
  */
 export function useMutatePractice() {
   const { toggleCompletion } = usePracticesContext();

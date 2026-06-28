@@ -1,4 +1,5 @@
 import CategoryTag from "@/components/practices/CategoryTag";
+import AppLoader from "@/components/ui/AppLoader";
 import Button from "@/components/ui/Button";
 import {
   useMutatePractice,
@@ -106,11 +107,7 @@ export default function PracticeDetailScreen() {
 
   const renderContent = () => {
     if (isLoading) {
-      return (
-        <View style={styles.centerContainer}>
-          <ActivityIndicator size="large" color={tokens.colors.accent} />
-        </View>
-      );
+      return <AppLoader />;
     }
 
     if (isError || !practice) {
@@ -173,12 +170,7 @@ export default function PracticeDetailScreen() {
               showsVerticalScrollIndicator={false}
               style={styles.descriptionScroll}
             >
-              <Text style={styles.description}>
-                {description} Lorem ipsum dolor sit amet, consectetur adipiscing
-                elit. Sed do eiusmod tempor incididunt ut labore et dolore magna
-                aliqua. Ut enim ad minim veniam, quis nostrud exercitation
-                ullamco laboris nisi ut aliquip ex ea commodo consequat.
-              </Text>
+              <Text style={styles.description}>{description}</Text>
             </ScrollView>
           </View>
 
@@ -264,12 +256,7 @@ export default function PracticeDetailScreen() {
             <Text style={styles.durationText}>{duration_minutes} min</Text>
           </View>
 
-          <Text style={styles.description}>
-            {description} A gentle sequence of yoga poses combined with
-            deliberate breathing to improve mobility and mental clarity. This
-            sequence is perfect for grounding yourself at the beginning of the
-            day. Consistent practice helps build body awareness and flexibility.
-          </Text>
+          <Text style={styles.description}>{description}</Text>
 
           <View style={styles.ratingBlockPortrait}>
             {renderStars()}

@@ -43,7 +43,7 @@ if (
 ) {
   Object.defineProperty(global.Response.prototype, "body", {
     get() {
-      // @ts-expect-error — accessing React Native's internal fetch body representation
+      // @ts-ignore — accessing React Native's internal fetch body representation
       const text = this._bodyText;
       return text != null ? text : null;
     },

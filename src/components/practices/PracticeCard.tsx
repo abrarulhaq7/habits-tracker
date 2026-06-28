@@ -1,10 +1,16 @@
-import React from 'react';
-import { View, Text, StyleSheet, Pressable, TouchableOpacity } from 'react-native';
-import { Feather } from '@expo/vector-icons';
-import { Practice } from '@/lib/types';
-import { tokens } from '@/lib/tokens';
-import Card from '../ui/Card';
-import CategoryTag from './CategoryTag';
+import { tokens } from "@/lib/tokens";
+import { Practice } from "@/lib/types";
+import { Feather } from "@expo/vector-icons";
+import React from "react";
+import {
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from "react-native";
+import Card from "../ui/Card";
+import CategoryTag from "./CategoryTag";
 
 interface PracticeCardProps {
   practice: Practice;
@@ -17,7 +23,14 @@ const PracticeCard = React.memo(function PracticeCard({
   onPress,
   onToggleComplete,
 }: PracticeCardProps) {
-  const { id, title, description, category, duration_minutes, completed_today } = practice;
+  const {
+    id,
+    title,
+    description,
+    category,
+    duration_minutes,
+    completed_today,
+  } = practice;
 
   const handleCardPress = () => {
     onPress(id);
@@ -32,17 +45,22 @@ const PracticeCard = React.memo(function PracticeCard({
       <Pressable onPress={handleCardPress} style={styles.pressableContent}>
         <View style={styles.leftContent}>
           <CategoryTag category={category} />
-          
+
           <Text style={styles.title} numberOfLines={2}>
             {title}
           </Text>
-          
+
           <Text style={styles.description} numberOfLines={3}>
             {description}
           </Text>
-          
+
           <View style={styles.durationRow}>
-            <Feather name="clock" size={12} color={tokens.colors.textMuted} style={styles.clockIcon} />
+            <Feather
+              name="clock"
+              size={12}
+              color={tokens.colors.textMuted}
+              style={styles.clockIcon}
+            />
             <Text style={styles.durationText}>{duration_minutes} min</Text>
           </View>
         </View>
@@ -53,11 +71,15 @@ const PracticeCard = React.memo(function PracticeCard({
           style={styles.checkmarkContainer}
           accessibilityRole="checkbox"
           accessibilityState={{ checked: completed_today }}
-          accessibilityLabel={`Mark ${title} as ${completed_today ? 'incomplete' : 'complete'}`}
+          accessibilityLabel={`Mark ${title} as ${completed_today ? "incomplete" : "complete"}`}
         >
           {completed_today ? (
             <View style={styles.checkmarkChecked}>
-              <Feather name="check" size={14} color={tokens.colors.background} />
+              <Feather
+                name="check"
+                size={14}
+                color={tokens.colors.background}
+              />
             </View>
           ) : (
             <View style={styles.checkmarkUnchecked} />
@@ -67,17 +89,18 @@ const PracticeCard = React.memo(function PracticeCard({
     </Card>
   );
 });
+
 export default PracticeCard;
 
 const styles = StyleSheet.create({
   cardContainer: {
     padding: 0,
-    overflow: 'hidden',
+    overflow: "hidden",
   },
   pressableContent: {
     padding: tokens.spacing.md,
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   leftContent: {
     flex: 1,
@@ -97,8 +120,8 @@ const styles = StyleSheet.create({
     marginBottom: tokens.spacing.sm,
   },
   durationRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
+    flexDirection: "row",
+    alignItems: "center",
   },
   clockIcon: {
     marginRight: tokens.spacing.xs,
@@ -111,16 +134,16 @@ const styles = StyleSheet.create({
   checkmarkContainer: {
     width: 44, // Generous touch target
     height: 44,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkmarkChecked: {
     width: 24,
     height: 24,
     borderRadius: 12,
     backgroundColor: tokens.colors.success,
-    justifyContent: 'center',
-    alignItems: 'center',
+    justifyContent: "center",
+    alignItems: "center",
   },
   checkmarkUnchecked: {
     width: 24,
@@ -128,6 +151,6 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     borderWidth: 2,
     borderColor: tokens.colors.border,
-    backgroundColor: 'transparent',
+    backgroundColor: "transparent",
   },
 });

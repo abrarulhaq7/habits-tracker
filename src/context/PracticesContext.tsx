@@ -102,9 +102,7 @@ export function PracticesProvider({ children }: { children: React.ReactNode }) {
   const refetch = useCallback(async () => {
     dispatch({ type: "FETCH_START" });
     try {
-      console.log("[PracticesContext] Fetching practices...");
       const data = await fetchPractices();
-      console.log("[PracticesContext] Fetch successful! Items:", data.length);
       dispatch({ type: "FETCH_SUCCESS", payload: data });
     } catch (err) {
       console.error("[PracticesContext] Fetch failed with error:", err);

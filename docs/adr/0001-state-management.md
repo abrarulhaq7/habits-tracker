@@ -6,86 +6,97 @@
 ## Context
 
 This app has three screens that all need to agree on the same underlying
-data: a list of practices, each with a `completed_today` flag and a
-`rating`. The brief's hardest requirement is structural: the Practices tab
-contains its own stack (List → Detail), and a sibling Summary tab must
-reflect changes made on the Detail screen the moment the user switches tabs.
+data: a list of practices, each with `completed_today`, `rating`, and
+`title` fields that can change independently. The brief's hardest
+requirement is structural: the Practices tab contains its own stack
+(List → Detail), and a sibling Summary tab must reflect changes made on the
+Detail screen the moment the user switches tabs.
 
 That means state cannot live inside any single screen's local `useState` —
-List, Detail, and Summary are different components in different navigators,
-and none of them is an ancestor of the others in a way that local state or
-simple prop drilling could reach.
+`PracticesListScreen`, `PracticeDetailScreen`, and `SummaryScreen` are
+different components in different navigators, and none is an ancestor of
+the others in a way local state or simple prop drilling could reach.
 
-There is also no real backend. The "network layer" is a mock, but the brief
-is explicit that it should be approached the way a real network layer would
-be — meaning the state solution should be one that would still make sense if
-a real API replaced the mock tomorrow.
+There is also no real backend — the network layer is mocked via MSW — but
+the brief asks for it to be approached the way a real one would be.
 
 ## Decision
 
-**Use TanStack Query (React Query) as the single source of truth for all
-practice data**, keyed under `['practices']`.
+**Use a single React Context (`PracticesContext`) backed by `useReducer`
+as the source of truth for all practice data**, with one provider mounted
+above the tab navigator so `PracticesListScreen`, `PracticeDetailScreen`,
+and `SummaryScreen` all read from the same in-memory state.
 
-- `usePractices()` reads the query. `useMutatePractice()` writes to it via
-  `useMutation`, patching the cache directly in `onMutate` for the optimistic
-  path (see the README for which mutation is optimistic and why).
-- List, Detail, and Summary all call `usePractices()` (directly or via
-  `useSummaryStats()`, which derives from the same cache). Because TanStack
-  Query de-duplicates by query key, all three are reading **one** in-memory
-  object, not three independent copies. A cache write from Detail is visible
-  to List and Summary on their next render — which for React Query backed
-  by `useQuery` subscriptions means immediately, no manual refetch or event
-  bus required.
-- Local, UI-only state (e.g. an in-progress star selection before the user
-  releases their tap) stays as plain `useState` inside the component that
-  owns it. It never gets promoted to the shared layer.
-- No Redux, Zustand, or Context-based global store is introduced. There is no
-  state in this app that is shared-but-not-server-shaped, so there is nothing
-  for a general-purpose client store to do that the query cache doesn't
-  already do better (deduping, cache invalidation, loading/error states,
-  refetch-on-refresh all come for free).
-
-**If** a future requirement introduced genuinely client-only shared state
-with no server shape (e.g. a theme toggle persisted across screens, an
-in-progress multi-step wizard), the next step would be a single
-`AppStateProvider` using Context + `useReducer` — not a new dependency —
-since at this app's scale a second library would be solving a problem
-Context already solves.
+- The reducer handles six action types: `FETCH_START`, `FETCH_SUCCESS`,
+  `FETCH_ERROR` (the fetch lifecycle), and `OPTIMISTIC_UPDATE`,
+  `UPDATE_PRACTICE`, `ROLLBACK` (the mutation lifecycle).
+- Three domain mutation functions live on the context —
+  `toggleCompletion`, `mutatePracticeRating`, `mutatePracticeTitle` — each
+  exposed to screens through a thin hook (`useMutatePractice`,
+  `useMutatePracticeRating`, `useMutatePracticeTitle` in
+  `hooks/usePractices.ts`). Screens call these hooks; they never dispatch
+  to the reducer directly.
+- All three mutations follow the same lifecycle: snapshot the current
+  `state.practices`, dispatch `OPTIMISTIC_UPDATE` with the patch
+  immediately, await the corresponding `lib/api/practices.ts` call, then
+  dispatch `UPDATE_PRACTICE` with the server-confirmed value on success or
+  `ROLLBACK` to the snapshot on failure.
+- Because `PracticesListScreen`, `PracticeDetailScreen`, and
+  `SummaryScreen` all read from the same `PracticesContext` provider (via
+  `usePractices()` and `useSummaryStats()`), a dispatch from the Detail
+  screen is visible to List and Summary on their very next render — no
+  manual refetch, no event bus, no prop drilling across the tab boundary.
+- Local, UI-only state (e.g. which star is being actively pressed before
+  release) stays as plain `useState` inside the component that owns it. It
+  never gets promoted into the context.
 
 ## Consequences
 
-- Cross-tab sync, the single hardest requirement in the brief, is solved by
-  the data layer's normal behavior rather than bespoke plumbing. There is no
-  custom event system, no "refresh on focus" listener, no Context provider
-  whose only job is to hold a list.
-- Pull-to-refresh, loading state, and error state are the library's standard
-  output (`isLoading`, `isError`, `refetch`), not hand-written booleans.
-- Optimistic updates follow a known, testable lifecycle (`onMutate` /
-  `onError` rollback / `onSettled` invalidate) instead of an ad hoc "update
-  state now, fix it later if the request fails" pattern.
-- Risk: a reviewer could read "added a data-fetching library for a mock API"
-  as overengineering if the reasoning above isn't stated. Mitigated by
-  writing the reasoning down here and in the README rather than assuming it's
-  self-evident.
+- Cross-tab sync, the single hardest requirement in the brief, is solved
+  by one provider sitting above the tab navigator — every consumer reads
+  the same state object, so there is nothing to keep in sync.
+- All three mutations follow one consistent, explicit lifecycle
+  (snapshot → optimistic dispatch → reconcile or rollback), rather than
+  three different ad hoc patterns.
+- Zero added dependencies. The entire state layer is `react`'s built-in
+  `useReducer` + `useContext`.
+- Cost: there's no settle-time reconciliation step beyond the
+  `UPDATE_PRACTICE` dispatch on success. If a server response ever
+  diverged in shape or value from what the optimistic patch assumed,
+  nothing would re-validate it automatically — this is the kind of gap a
+  cache-invalidation layer would close for free, and the first thing to
+  revisit if this app connected to a real backend with retries and
+  variable latency.
+- Known, documented gap: `isPending` and `isRefetching` are currently
+  hardcoded `false` in the hook layer (`hooks/usePractices.ts`) rather
+  than tracked in the reducer. The optimistic dispatch/rollback logic
+  itself is correct and functions properly; what's missing is exposing
+  real in-flight state to the UI for spinners/disabled buttons. Tracked in
+  the README's "what's next."
+- Risk: a single Context provider re-renders every consumer on any state
+  change, including ones that only care about a different practice's
+  data. At 120 mock items this hasn't shown up as a real problem — see
+  ADR 0003 for how `React.memo` boundaries currently absorb this — but
+  it's the first thing to revisit if the dataset or screen count grows
+  substantially.
 
 ## Alternatives considered
 
-- **React Context + `useReducer` as the single shared store.** Rejected as
-  the primary mechanism: it would work, but means hand-building cache
-  invalidation, loading/error flags, and refetch-on-pull-to-refresh, all of
-  which TanStack Query provides directly. Kept in reserve for any future
-  client-only state that has no server shape.
-- **Redux Toolkit (with or without RTK Query).** Rejected: more ceremony
-  (slices, store setup, provider) than this app's scope justifies. RTK Query
-  would solve the same caching problem as TanStack Query but with a heavier
-  API surface for no added benefit here.
-- **Lift state to the navigator root and pass it down via route params /
-  context manually.** Rejected: route params are for navigation intent, not
-  shared application state, and passing live mutable state through them
-  would fight the navigation library rather than use it. Also reinvents
-  exactly what a query cache already does.
-- **Zustand.** A reasonable lightweight option in general, and the right
-  default for incidental cross-component client state per the trigger rule
-  above. Rejected as the _primary_ layer here specifically because this
-  app's shared state is server-shaped (a fetched list with mutations), which
-  is TanStack Query's specialty, not a generic store's.
+- **A data-fetching/cache library (e.g. TanStack Query).** Would provide
+  cache invalidation, a built-in pending/settled lifecycle, and
+  request deduplication for free, removing the two gaps noted above.
+  Rejected for this app's current scope: the data is a fixed, small mock
+  set with three well-defined mutation shapes, and `useReducer` +
+  `useContext` covers the same cross-tab-sync requirement without adding a
+  dependency. Worth reconsidering if this app connects to a real backend.
+- **Redux Toolkit.** Rejected: more ceremony (slices, store setup,
+  provider wiring) than one list with three mutation types justifies.
+- **Zustand.** A reasonable lightweight option for incidental cross-component
+  client state in general. Rejected here specifically because Context +
+  `useReducer` already covers this app's one-list, fixed-mutation-shape
+  state without adding a dependency, and there's no other unrelated shared
+  state in the app that would benefit from a separate store.
+- **Lifting state to the navigator root and passing it via route params.**
+  Rejected: route params communicate navigation intent, not live mutable
+  application state — passing the practices list through them would fight
+  the navigation library rather than use it.
